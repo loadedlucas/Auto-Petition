@@ -21,8 +21,8 @@ intents.message_content = True
 intents.members = True
 
 # Definitions
-PETITIONS_CHANNEL_ID = 1514421813231222857
-VOTES_CHANNEL_ID = 1514421992281870407
+PETITIONS_CHANNEL_ID = 1462204507269238804
+VOTES_CHANNEL_ID = 1389992532967948369
 VOTING_TIME = time(hour=18, minute=0, tzinfo=datetime.now().astimezone().tzinfo)
 
 bot = commands.Bot(command_prefix=">", intents=intents)
