@@ -134,7 +134,7 @@ async def petition(
 # ----- Delete Petitions -----
 @bot.tree.command()
 @app_commands.checks.has_any_role("Moderator", "Admin")
-async def deletepetition(interaction: discord.Interaction, petition_id: int):
+async def delete_petition(interaction: discord.Interaction, petition_id: int):
     database.hold_back(petition_id=petition_id)
     await interaction.response.send_message(f"Petition #{petition_id} has been removed from the queue! It will not appear in the next voting round.", ephemeral=True)
 
