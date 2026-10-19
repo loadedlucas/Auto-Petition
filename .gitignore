@@ -1,1 +1,4 @@
 .env
+discord.log
+petitions.db
+__pycache__/
