@@ -5,6 +5,7 @@ os.environ["SSL_CERT_FILE"] = certifi.where() # This was a required workaround o
 
 import discord
 from discord import app_commands, Embed
+from discord.app_commands import Range
 from discord.ext import commands, tasks
 import logging
 from dotenv import load_dotenv
@@ -17,12 +18,10 @@ token = os.getenv("DISCORD_TOKEN")
 
 handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
 intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
 
 # Definitions
-PETITIONS_CHANNEL_ID = 1514421813231222857 # Should match the respective channels in the CozyMC discord server, if not, correct IDs are listed in README.md
-VOTES_CHANNEL_ID = 1514421992281870407
+PETITIONS_CHANNEL_ID = 1462204507269238804 # Should match the respective channels in the CozyMC discord server, if not, correct IDs are listed in README.md
+VOTES_CHANNEL_ID = 1389992532967948369
 VOTING_TIME = time(hour=18, minute=0, tzinfo=datetime.now().astimezone().tzinfo) # Local hardware time
 
 bot = commands.Bot(command_prefix=">", intents=intents)
@@ -74,16 +73,10 @@ async def on_ready():
 @bot.tree.error
 async def petition_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.MissingAnyRole):
-        await interaction.response.send_message(
-            f"Upload failed. Missing the \"Voter\" role!",
-            ephemeral=True
-        )
+        await interaction.response.send_message(f"Upload failed. Missing the \"Voter\" role!", ephemeral=True)
         return
     if isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(
-            f"Upload failed. Please wait a minute between uploading petitions!",
-            ephemeral=True
-        )
+        await interaction.response.send_message(f"Upload failed. Please wait a minute between uploading petitions!", ephemeral=True)
         return
     raise error
 
@@ -117,18 +110,19 @@ async def petition_error(interaction: discord.Interaction, error: app_commands.A
 ])
 async def petition(
     interaction: discord.Interaction,
-    title: str,
-    location: str,
-    type: str,
-    state: str,
-    proposal: str,
-    impact: str,
-    scope: str,
-    duration: str,
-    maintenance: str,
-    alternatives: str,
-    acknowledgement: str
+    title: Range[str, 1, 100],
+    location: Range[str, 1, 1024],
+    type: Range[str, 1, 1024],
+    state: Range[str, 1, 1024],
+    proposal: Range[str, 1, 1024],
+    impact: Range[str, 1, 1024],
+    scope: Range[str, 1, 1024],
+    duration: Range[str, 1, 1024],
+    maintenance: Range[str, 1, 1024],
+    alternatives: Range[str, 1, 1024],
+    acknowledgement: Range[str, 1, 1024]
 ):
+
     # Save petition to database
     user_id = interaction.user.id
     petition_id = database.add_petition(type=type)
@@ -167,7 +161,16 @@ async def petition(
 
     database.update_thread_link(thread_link=thread.mention, petition_id=petition_id)
     await interaction.response.send_message(f"Petition saved for review. Screenshots can be added in the discussion thread {thread.mention}. Votes will start on Friday!", ephemeral=True)
-    await thread.send("Here is the thread")
+    
+    # Starting message in thread based on different petition types
+    cautious_types = ["Shop Takeover", "Build Takeover", "Build Removal"] # Any petition where containers need to be removed by staff
+    semi_cautous_types = ["Shop Expansion", "Other"] # Any petition where containers might need to be removed by staff (-> different wording)
+    if type in cautious_types:
+        await thread.send(f"{user_mention} this is your petition thread! Please post any relevent screenshots in here. If you wish to delete your petition, open a support ticket.\n\n**Reminder from the staff team:** If this petition passes, only the build changes hands, not the items inside (this includes containers, armor stands and item frames). If items are found during takeover, open a support ticket so staff can remove them for you! Taking them yourself is considered theft under the server rules, regardless of the vote's outcome.")
+    elif type in semi_cautous_types:
+        await thread.send(f"{user_mention} this is your petition thread! Please post any relevent screenshots in here. If you wish to delete your petition, open a support ticket.\n\n**Reminder from the staff team:** If this petition passes and building are taken over, only the build changes hands, not the items inside (this includes containers, armor stands and item frames). If items are found during takeover, open a support ticket so staff can remove them for you! Taking them yourself is considered theft under the server rules, regardless of the vote's outcome.")
+    else:
+        await thread.send(f"{user_mention} this is your petition thread! Please post any relevent screenshots in here. If you wish to delete your petition, open a support ticket.")
 
 # ----- Delete Petitions -----
 @bot.tree.command()
