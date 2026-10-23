@@ -21,8 +21,8 @@ intents.message_content = True
 intents.members = True
 
 # Definitions
-PETITIONS_CHANNEL_ID = 1462204507269238804 # The channel IDs are already set to #submit-world-petition and #world-votes in the CozyMC discord respectively
-VOTES_CHANNEL_ID = 1389992532967948369
+PETITIONS_CHANNEL_ID = 1514421813231222857 # Should match the respective channels in the CozyMC discord server, if not, correct IDs are listed in README.md
+VOTES_CHANNEL_ID = 1514421992281870407
 VOTING_TIME = time(hour=18, minute=0, tzinfo=datetime.now().astimezone().tzinfo) # Local hardware time
 
 bot = commands.Bot(command_prefix=">", intents=intents)
@@ -73,6 +73,12 @@ async def on_ready():
 # Error handling to notify users when they create petitions to fast
 @bot.tree.error
 async def petition_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.MissingAnyRole):
+        await interaction.response.send_message(
+            f"Upload failed. Missing the \"Voter\" role!",
+            ephemeral=True
+        )
+        return
     if isinstance(error, app_commands.CheckFailure):
         await interaction.response.send_message(
             f"Upload failed. Please wait a minute between uploading petitions!",
@@ -161,6 +167,7 @@ async def petition(
 
     database.update_thread_link(thread_link=thread.mention, petition_id=petition_id)
     await interaction.response.send_message(f"Petition saved for review. Screenshots can be added in the discussion thread {thread.mention}. Votes will start on Friday!", ephemeral=True)
+    await thread.send("Here is the thread")
 
 # ----- Delete Petitions -----
 @bot.tree.command()
